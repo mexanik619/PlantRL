@@ -15,7 +15,7 @@ from .primary_shoot_agent import PrimaryShootAgent
 from .lateral_root_agent import LateralRootAgent
 from .branch_agent import BranchAgent
 
-REGISTRY: dict[str, Type[BaseAgent]] = {
+REGISTRY: dict[str, Type[BaseAgent]] = { # Here you can add new agents :)
     "primary_root":  PrimaryRootAgent,
     "primary_shoot": PrimaryShootAgent,
     "lateral_root":  LateralRootAgent,
