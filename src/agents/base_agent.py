@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 # Observation space dimensionality (must match spec)
 OBS_DIM = 28
 
-# Action bounds (radians)
+# Action bounds (radians) (Angle of bending in radians)
 ACTION_MIN = -0.35
 ACTION_MAX = 0.35
 
