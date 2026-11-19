@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plantrl"
+version = "0.1.0"
+description = "RL plant-growth simulation: SAC with a sequential multi-agent meristem queue"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "stable-baselines3[extra]>=2.3.0",
+    "gymnasium>=0.29.0",
+    "numpy>=1.24.0",
+    "torch>=2.0.0",
+    "tensorboard>=2.14.0",
+]
+
+[project.optional-dependencies]
+viz = ["matplotlib>=3.7"]
+dev = ["pytest>=7.4.0"]
+
+[project.scripts]
+plantrl-train = "plantrl.train:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]      # lets `pytest` work even before `pip install -e .`

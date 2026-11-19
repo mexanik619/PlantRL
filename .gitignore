@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Environments
+.venv/
+venv/
+
+# Tooling / editors
+.pytest_cache/
+.ruff_cache/
+.idea/
+.vscode/
+
+# Training & visualisation output (regenerate with plantrl-train / visualize)
+checkpoints/
+logs/
+runs/

@@ -1,7 +1,8 @@
 """train.py — SAC training with 3-stage curriculum for PlantRL.
 
-Usage:
-    python src/train.py [--stage 1] [--total-steps 1000000] [--n-envs 4]
+Usage (after ``pip install -e .``):
+    plantrl-train --stage 1 --total-steps 1000000
+    python -m plantrl.train --stage 1 --total-steps 1000000
 
 The curriculum automatically advances the stage when mean episode reward
 exceeds the configured threshold for 10k consecutive steps.
@@ -11,10 +12,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import sys
-
-# Allow running as `python src/train.py` from project root
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 import numpy as np
 from stable_baselines3 import SAC
@@ -25,7 +22,7 @@ from stable_baselines3.common.callbacks import (
     EvalCallback,
 )
 
-from environment.env import PlantEnv
+from plantrl.environment.env import PlantEnv
 
 
 # ──────────────────────────────────────────────
@@ -203,7 +200,7 @@ def train(
 # CLI
 # ──────────────────────────────────────────────
 
-if __name__ == "__main__":
+def main() -> None:
     parser = argparse.ArgumentParser(description="Train PlantRL SAC agent")
     parser.add_argument("--stage", type=int, default=1, choices=[1, 2, 3])
     parser.add_argument("--total-steps", type=int, default=1_000_000)
@@ -219,3 +216,7 @@ if __name__ == "__main__":
         checkpoint_dir=args.checkpoint_dir,
         seed=args.seed,
     )
+
+
+if __name__ == "__main__":
+    main()
