@@ -23,10 +23,13 @@ PlantRL/
 │   │   └── hormone_field.py      # Auxin/cytokinin on 32×32 coarse grid + bilinear interp
 │   ├── environment/
 │   │   └── env.py                # PlantEnv — Gymnasium env with FIFO queue + curriculum
+│   ├── viz/                      # recorder (gym wrapper → .npz) + matplotlib replay renderer
+│   ├── visualize.py              # `plantrl-viz` CLI: record / replay episodes
 │   └── train.py                  # SAC training + 3-stage curriculum callbacks
 ├── tests/
 │   ├── test_world.py
-│   └── test_env.py
+│   ├── test_env.py
+│   └── test_viz.py
 └── (git-ignored, generated)  checkpoints/  logs/  runs/
 ```
 
@@ -86,3 +89,23 @@ SB3 cannot change it mid-run without rebuilding the model.
 2. Add one line to `REGISTRY` in `agent_registry.py`
 
 `environment/env.py` never imports agent classes directly — only uses the registry.
+
+## Visualizer
+
+Record one episode (any policy) and replay it offline — rendering never runs inside the training loop.
+Needs the `viz` extra (matplotlib; `ffmpeg` only for `.mp4`).
+
+```bash
+# "do nothing" baseline vs random vs a trained checkpoint (same --seed => same world)
+plantrl-viz --stage 1 --policy zero   --seed 0 --out runs/viz/zero_s1.mp4
+plantrl-viz --stage 1 --policy random --seed 0 --out runs/viz/random_s1.gif
+plantrl-viz --stage 1 --policy checkpoint --model checkpoints/best/best_model.zip --seed 0 --out runs/viz/best_s1.mp4
+
+# single frame / hormone layers / re-render a saved recording (no env or model needed)
+plantrl-viz --stage 3 --policy random --out ep.png --frame 60 --fields moisture light auxin cyto
+plantrl-viz --replay runs/viz/random_s1.npz --out again.mp4
+```
+
+Panels: the world (moisture / light / hormone layers, obstacles, plant coloured by agent type, handoff and
+spawn markers), step info, **cumulative reward split by term** (photo / hydro / gravi / cost / goal) and the
+28-float observation grouped by slice.

@@ -95,6 +95,8 @@ class BaseAgent:
         self.done: bool = False
         self.stop_reason: StopReason = StopReason.BUDGET
         self.segments: list[GrowthSegment] = []
+        # Per-term breakdown of the last step's shaped reward (read by viz/recorder)
+        self.last_reward_terms: dict[str, float] = {}
 
     # ------------------------------------------------------------------
     # Observation builder — 28 floats (FIXED LAYOUT per spec)
@@ -247,29 +249,35 @@ class BaseAgent:
         step_len = math.hypot(dx, dy) + 1e-8
         gx, gy = dx / step_len, dy / step_len  # normalised growth direction
 
-        r = 0.0
+        photo = hydro = 0.0
 
         # Phototropism (shoot only via W_PHOTO)
         if self.W_PHOTO > 0:
-            r += self.W_PHOTO * (
+            photo = self.W_PHOTO * (
                 gx * world.light_dir_x + gy * world.light_dir_y
             ) * world.light_intensity
 
         # Hydrotropism (root only via W_HYDRO)
         if self.W_HYDRO > 0:
-            r += self.W_HYDRO * (
+            hydro = self.W_HYDRO * (
                 gx * world.moisture_grad_x + gy * world.moisture_grad_y
             )
 
         # Gravitropism (all agents) (Need fixes)
-        r += self.W_GRAVI * (gx * world.gravity_x + gy * world.gravity_y)
+        gravi = self.W_GRAVI * (gx * world.gravity_x + gy * world.gravity_y)
 
         # Running costs
-        r -= self.ENERGY_COST
+        cost = -self.ENERGY_COST
         if collision:
-            r -= self.COLLISION_PENALTY
+            cost -= self.COLLISION_PENALTY
 
-        return float(r)
+        self.last_reward_terms = {
+            "photo": float(photo),
+            "hydro": float(hydro),
+            "gravi": float(gravi),
+            "cost": float(cost),
+        }
+        return float(photo + hydro + gravi + cost)
 
     # ------------------------------------------------------------------
     # Terminal condition hooks (override in subclasses)
