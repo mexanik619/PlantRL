@@ -6,7 +6,9 @@ RL-based plant growth simulation using Soft Actor-Critic (SAC). A plant grows in
 
 ```
 PlantRL/
-├── src/
+├── pyproject.toml                # package metadata, dependencies, pytest config, CLI entry point
+├── requirements.txt              # `-e .[viz,dev]` (dependencies live in pyproject.toml)
+├── src/plantrl/
 │   ├── agents/
 │   │   ├── types.py              # Shared data: StopReason, AgentHandoff, WorldSnapshot, GlobalPlantState
 │   │   ├── base_agent.py         # 28-float obs builder, growth step, reward, terminal hooks
@@ -25,25 +27,22 @@ PlantRL/
 ├── tests/
 │   ├── test_world.py
 │   └── test_env.py
-└── requirements.txt
+└── (git-ignored, generated)  checkpoints/  logs/  runs/
 ```
 
 ## Quick Start
 
 ```bash
-# Install dependencies (into existing venv)
-pip install -r requirements.txt
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt          # editable install of `plantrl` + matplotlib + pytest
 
-# Run tests
-cd /home/mikocat/Repos/PlantRL
-python -m pytest tests/ -v
+python -m pytest -v                      # run tests
 
 # Smoke test (single episode, no training)
 python -c "
-import sys; sys.path.insert(0, 'src')
-from environment.env import PlantEnv
+from plantrl.environment import PlantEnv
 env = PlantEnv(stage=1)
-obs, _ = env.reset()
+obs, _ = env.reset(seed=0)
 print('obs shape:', obs.shape)
 done = False; steps = 0
 while not done:
@@ -52,8 +51,9 @@ while not done:
 print(f'Episode done in {steps} steps. Final reward: {r:.3f}')
 "
 
-# Train (stage 1 → auto-advances through curriculum)
-python src/train.py --stage 1 --total-steps 1000000
+# Train (stage 1 → auto-advances through the curriculum)
+plantrl-train --stage 1 --total-steps 1000000     # or: python -m plantrl.train ...
+tensorboard --logdir logs
 ```
 
 ## Design Overview
@@ -72,14 +72,17 @@ Sequential FIFO queue — one meristem tip active at a time. All agents share on
 | [23:28] | Global: shoot_light_deficit, root_water_found, biomass, height, depth |
 
 ### Curriculum Stages
-| Stage | Envs | Condition |
-|-------|------|-----------|
-| 1 | 4 | Fixed light, single moisture, no obstacles |
-| 2 | 8 | Random positions, simple obstacles, ±15° gravity |
-| 3 | 8–16 | Moving light, depleting soil, dense obstacles, ±30° gravity mid-episode |
+| Stage | Condition |
+|-------|-----------|
+| 1 | Fixed light, single moisture, no obstacles |
+| 2 | Random positions, simple obstacles, ±15° gravity |
+| 3 | Moving light, depleting soil, dense obstacles, ±30° gravity mid-episode |
+
+The number of parallel envs is one constant for the whole run (`CURRICULUM[*]["n_envs"]` in `train.py`):
+SB3 cannot change it mid-run without rebuilding the model.
 
 ### Adding a New Agent Type
-1. Create `src/agents/my_agent.py` subclassing `BaseAgent`
+1. Create `src/plantrl/agents/my_agent.py` subclassing `BaseAgent`
 2. Add one line to `REGISTRY` in `agent_registry.py`
 
-`plant_env.py` never imports agent classes directly — only uses the registry.
+`environment/env.py` never imports agent classes directly — only uses the registry.

@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import numpy as np
 import pytest
 
-from environment.env import PlantEnv
-from agents.base_agent import OBS_DIM
+from plantrl.environment.env import PlantEnv
+from plantrl.agents.base_agent import OBS_DIM
 
 
 # ──────────────────────────────────────────────

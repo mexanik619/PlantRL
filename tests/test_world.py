@@ -3,17 +3,13 @@
 from __future__ import annotations
 
 import math
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import numpy as np
 import pytest
 
-from world.light_field import LightField
-from world.moisture_field import MoistureField, MoistureSource
-from world.hormone_field import HormoneField
+from plantrl.world.light_field import LightField
+from plantrl.world.moisture_field import MoistureField, MoistureSource
+from plantrl.world.hormone_field import HormoneField
 
 
 # ──────────────────────────────────────────────

@@ -18,18 +18,18 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 
-from agents.agent_registry import spawn
-from agents.types import (
+from plantrl.agents.agent_registry import spawn
+from plantrl.agents.types import (
     AgentHandoff,
     GlobalPlantState,
     GrowthSegment,
     StopReason,
     WorldSnapshot,
 )
-from agents.base_agent import OBS_DIM
-from world.light_field import LightField
-from world.moisture_field import MoistureField
-from world.hormone_field import HormoneField
+from plantrl.agents.base_agent import OBS_DIM
+from plantrl.world.light_field import LightField
+from plantrl.world.moisture_field import MoistureField
+from plantrl.world.hormone_field import HormoneField
 
 # ──────────────────────────────────────────────
 # World geometry constants
@@ -115,6 +115,7 @@ class PlantEnv(gym.Env):
         # Track whether milestone-based children have been spawned
         self._lateral_roots_spawned: bool = False
         self._branches_spawned: bool = False
+        self._episode_done: bool = False
 
     # ──────────────────────────────────────────────
     # Gymnasium API
@@ -138,6 +139,7 @@ class PlantEnv(gym.Env):
         self._total_agents_spawned = 0
         self._lateral_roots_spawned = False
         self._branches_spawned = False
+        self._episode_done = False
         self._last_handoff = AgentHandoff()
         self._global_state = GlobalPlantState()
         self._gravity_tilt_step = 0
@@ -157,13 +159,20 @@ class PlantEnv(gym.Env):
     def step(
         self, action: np.ndarray
     ) -> tuple[np.ndarray, float, bool, bool, dict]:
+        # Auto-reset guard: SubprocVecEnv may call step() before sending
+        # reset() on an already-finished episode.  Return a fresh episode
+        # instead of crashing.
+        if self._episode_done:
+            obs, info = self.reset()
+            return obs, 0.0, False, False, info
+
         delta_theta = float(np.clip(action[0], -0.35, 0.35))
 
         agent = self._active_agent
         if agent is None:
-            # Queue exhausted — should not normally happen; return trivial done
-            obs = np.zeros(OBS_DIM, dtype=np.float32)
-            return obs, 0.0, True, False, {}
+            # Queue exhausted — should not normally happen; auto-reset
+            obs, info = self.reset()
+            return obs, 0.0, False, False, info
 
         # Sample world at current tip before the step
         world_snap = self._sample_world(agent.tip_pos)
@@ -203,6 +212,7 @@ class PlantEnv(gym.Env):
                 obs = self._get_obs()
                 return obs, reward, False, False, info
             else:
+                self._episode_done = True
                 obs = np.zeros(OBS_DIM, dtype=np.float32)
                 return obs, reward, True, False, info
 
