@@ -52,12 +52,22 @@ CURRICULUM = {
 # Curriculum advancement callback
 # ──────────────────────────────────────────────
 
+def set_env_stage(vec_env, stage: int) -> None:
+    """Switch every worker env to ``stage`` (applies on each env's next reset).
+
+    Uses ``env_method`` -> ``PlantEnv.set_stage``. ``vec_env.set_attr("stage", ...)``
+    looks like it should work but only sets the attribute on the outer Monitor
+    wrapper, so the real env silently stays on the old stage.
+    """
+    vec_env.env_method("set_stage", stage)
+
+
 class CurriculumCallback(BaseCallback):
     """Advances curriculum stage when mean reward threshold is met.
 
     Monitors mean episode reward over the last ``window`` episodes.
-    When it exceeds ``threshold`` the vectorised envs are rebuilt at the
-    next stage and the model's environment pointer is updated.
+    When it exceeds ``threshold`` every worker env is switched to the next
+    stage in place (see ``set_env_stage``); the vec env itself is not rebuilt.
     """
 
     def __init__(
@@ -100,7 +110,7 @@ class CurriculumCallback(BaseCallback):
             self._ep_rewards.clear()
             # Update stage on existing envs in-place (takes effect on
             # next natural episode reset, avoids env-swap Monitor issues)
-            self.model_ref[0].env.set_attr("stage", new_stage)
+            set_env_stage(self.model_ref[0].env, new_stage)
 
         return True
 
