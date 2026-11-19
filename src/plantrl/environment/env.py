@@ -117,6 +117,16 @@ class PlantEnv(gym.Env):
         self._branches_spawned: bool = False
         self._episode_done: bool = False
 
+    def set_stage(self, stage: int) -> None:
+        """Switch curriculum stage; takes effect at the next ``reset()``.
+
+        Call it through ``vec_env.env_method("set_stage", n)``: ``VecEnv.set_attr``
+        only sets the attribute on the outer Monitor wrapper, not on this env.
+        """
+        if not 1 <= stage <= 3:
+            raise ValueError(f"stage must be 1, 2, or 3 (got {stage})")
+        self.stage = stage
+
     # ──────────────────────────────────────────────
     # Gymnasium API
     # ──────────────────────────────────────────────
