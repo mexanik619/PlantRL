@@ -97,6 +97,7 @@ class MoistureField:
         world_width: float = 20.0,
         max_depth: float = 12.0,
         depleting: bool = False,
+        sigma_range: tuple[float, float] = (1.5, 3.5),
     ) -> None:
         """Generate new random moisture sources for a new episode.
 
@@ -106,6 +107,8 @@ class MoistureField:
             world_width: Lateral span of the world.
             max_depth:   Maximum underground depth (positive value; y = -max_depth).
             depleting:   If True enables per-step depletion (stage 3).
+            sigma_range: (low, high) of each pocket's Gaussian spread. Wider pockets keep
+                         the gradient non-zero far from the centre (see PlantEnv stage 1).
         """
         rng = rng or np.random.default_rng()
         self.sources = []
@@ -113,7 +116,7 @@ class MoistureField:
             cx = float(rng.uniform(-world_width / 2, world_width / 2))
             cy = float(rng.uniform(-max_depth, self.soil_boundary - 0.5))
             peak = float(rng.uniform(0.6, 1.0))
-            sigma = float(rng.uniform(1.5, 3.5))
+            sigma = float(rng.uniform(*sigma_range))
             self.sources.append(MoistureSource(cx=cx, cy=cy, peak=peak, sigma=sigma))
         if depleting:
             self.depletion_rate = 0.002

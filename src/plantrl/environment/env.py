@@ -38,6 +38,8 @@ WORLD_WIDTH = 30.0        # ±15 x
 WORLD_HEIGHT = 15.0       # above soil
 WORLD_DEPTH = 12.0        # below soil (y negative)
 SOIL_BOUNDARY = 0.0       # y = 0 separates above/below ground
+DEFAULT_SIGMA_RANGE = (1.5, 3.5)   # moisture pocket spread, stages 2-3
+STAGE1_SIGMA_RANGE = (5.0, 7.0)    # stage 1: wide pockets -> water is sensed from the start
 
 # Branch spawning milestones
 ROOT_LATERAL_DEPTH = -3.0      # primary root must reach this depth to spawn laterals
@@ -431,6 +433,9 @@ class PlantEnv(gym.Env):
             world_width=WORLD_WIDTH,
             max_depth=WORLD_DEPTH,
             depleting=(stage == 3),
+            # Stage 1: wide pockets so the root can SENSE the water from the start
+            # (with sigma ~1.5 the gradient is ~0 beyond ~3 units, i.e. blind for most of the path).
+            sigma_range=STAGE1_SIGMA_RANGE if stage == 1 else DEFAULT_SIGMA_RANGE,
         )
 
         # -- Hormones --

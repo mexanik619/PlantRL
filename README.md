@@ -100,6 +100,9 @@ Gravity must stay a *mild* bias. With large weights, growing straight down score
 the water, and nothing can be learned. `tests/test_reward_alignment.py` guards this (a hand-coded steerer must
 beat a policy that never steers); run it after every reward change.
 
+Stage 1 uses wide moisture pockets (sigma 5-7) so the root senses the water from the start; stages 2-3 keep
+sigma 1.5-3.5, where the gradient is ~0 far from a pocket.
+
 ### Adding a New Agent Type
 1. Create `src/plantrl/agents/my_agent.py` subclassing `BaseAgent`
 2. Add one line to `REGISTRY` in `agent_registry.py`
