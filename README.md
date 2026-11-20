@@ -84,6 +84,22 @@ Sequential FIFO queue — one meristem tip active at a time. All agents share on
 The number of parallel envs is one constant for the whole run (`CURRICULUM[*]["n_envs"]` in `train.py`):
 SB3 cannot change it mid-run without rebuilding the model.
 
+### Reward design
+
+Per-step reward = `photo + hydro + gravi + progress + cost`, plus `GOAL_BONUS` (10) when an agent
+actually **finds** water or light. Hitting the depth/height cap ends the agent but pays nothing.
+
+| Term | Meaning |
+|------|---------|
+| `progress` | `W_PROGRESS` × world units moved closer to the target (nearest live water pocket for roots, light source for shoots/branches). Uses the true target position in the reward only; it is never part of the observation. |
+| `hydro`, `photo` | alignment of the growth direction with the moisture / light gradient |
+| `gravi` | alignment with gravity: weight 0.1 for roots, 0 for shoots/branches (a positive weight there would penalise growing up) |
+| `cost` | energy cost per step, collision penalty |
+
+Gravity must stay a *mild* bias. With large weights, growing straight down scores higher than steering to
+the water, and nothing can be learned. `tests/test_reward_alignment.py` guards this (a hand-coded steerer must
+beat a policy that never steers); run it after every reward change.
+
 ### Adding a New Agent Type
 1. Create `src/plantrl/agents/my_agent.py` subclassing `BaseAgent`
 2. Add one line to `REGISTRY` in `agent_registry.py`

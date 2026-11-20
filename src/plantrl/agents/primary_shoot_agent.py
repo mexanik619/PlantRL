@@ -23,7 +23,7 @@ class PrimaryShootAgent(BaseAgent):
 
     W_PHOTO = 1.5
     W_HYDRO = 0.0
-    W_GRAVI = 0.5   # positive: expected_gravity_dir for shoot is UPWARD (+y)
+    W_GRAVI = 0.0   # gravity term dots with (0,-1): a positive weight would penalise growing UP
     IS_ROOT = False
     BRANCH_DEPTH = 0
     MAX_STEPS = 50

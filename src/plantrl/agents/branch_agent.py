@@ -24,7 +24,7 @@ class BranchAgent(BaseAgent):
 
     W_PHOTO = 1.3
     W_HYDRO = 0.0
-    W_GRAVI = 0.4
+    W_GRAVI = 0.0   # see primary_shoot_agent: positive weight would penalise growing up
     IS_ROOT = False
     BRANCH_DEPTH = 1
     MAX_STEPS = 40

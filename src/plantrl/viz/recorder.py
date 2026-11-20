@@ -38,7 +38,7 @@ OBS_SLICES: list[tuple[int, int, str]] = [
     (16, 19, "identity"), (19, 23, "handoff"), (23, 28, "global"),
 ]
 
-TERM_NAMES = ("photo", "hydro", "gravi", "cost", "goal")
+TERM_NAMES = ("photo", "hydro", "gravi", "progress", "cost", "goal")
 
 
 class TrajectoryRecorder(gym.Wrapper):

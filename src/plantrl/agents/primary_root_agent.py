@@ -23,7 +23,7 @@ class PrimaryRootAgent(BaseAgent):
 
     W_PHOTO = 0.0
     W_HYDRO = 1.5
-    W_GRAVI = 0.8
+    W_GRAVI = 0.1
     IS_ROOT = True
     BRANCH_DEPTH = 0
     MAX_STEPS = 50

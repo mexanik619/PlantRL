@@ -32,7 +32,7 @@ AGENT_COLORS = {
     "branch": "#8fd16a",
 }
 STOP_COLORS = {"WATER_FOUND": "#1f77b4", "LIGHT_FOUND": "#e6b800", "BUDGET": "#777777", "SUPPRESSED": "#d62728"}
-TERM_COLORS = {"photo": "#e6b800", "hydro": "#1f77b4", "gravi": "#9467bd", "cost": "#999999", "goal": "#2ca02c"}
+TERM_COLORS = {"photo": "#e6b800", "hydro": "#1f77b4", "gravi": "#9467bd", "progress": "#17becf", "cost": "#999999", "goal": "#2ca02c"}
 SLICE_COLORS = ["#4c72b0", "#dd8452", "#55a868", "#c44e52", "#8172b3", "#937860"]
 ALL_FIELDS = ("moisture", "light", "auxin", "cyto")
 
@@ -171,7 +171,7 @@ def render_episode(
     ax_r.set_xlim(-0.5, T - 0.5)
     ax_r.set_title("cumulative reward by term  (shaded = active agent)", fontsize=8.5)
     ax_r.tick_params(labelsize=7)
-    ax_r.legend(fontsize=6.5, ncol=6, loc="upper left", frameon=False, handlelength=1.2, columnspacing=0.8)
+    ax_r.legend(fontsize=6.5, ncol=7, loc="upper left", frameon=False, handlelength=1.2, columnspacing=0.8)
     cursor = ax_r.axvline(0, color="red", lw=1.2)
 
     # ---- observation panel ----

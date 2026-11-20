@@ -270,7 +270,17 @@ class PlantEnv(gym.Env):
             gravity_y=gy,
             auxin_local=auxin,
             cytokinin_local=cyto,
+            water_target=self._nearest_water(pos),
+            light_target=(float(self.light.source_x), float(self.light.source_y)),
         )
+
+    def _nearest_water(self, pos: tuple[float, float]) -> tuple[float, float] | None:
+        """Centre of the nearest moisture pocket that is not yet depleted (reward shaping only)."""
+        live = [s for s in self.moisture.sources if s.peak >= 0.05]
+        if not live:
+            return None
+        s = min(live, key=lambda s: (s.cx - pos[0]) ** 2 + (s.cy - pos[1]) ** 2)
+        return (float(s.cx), float(s.cy))
 
     # ──────────────────────────────────────────────
     # Global plant state

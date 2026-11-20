@@ -20,7 +20,7 @@ class LateralRootAgent(BaseAgent):
 
     W_PHOTO = 0.0
     W_HYDRO = 1.8   # even stronger hydrotropism than primary root
-    W_GRAVI = 0.4
+    W_GRAVI = 0.1
     IS_ROOT = True
     BRANCH_DEPTH = 1
     MAX_STEPS = 30   # shorter budget per spec
