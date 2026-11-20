@@ -64,8 +64,9 @@ class BaseAgent:
     # ------------------------------------------------------------------
     W_PHOTO: float = 0.0
     W_HYDRO: float = 0.0
-    W_GRAVI: float = 0.5
-    GOAL_BONUS: float = 1.0
+    W_GRAVI: float = 0.1       # mild bias only: a big weight pays for growing straight and ignoring targets
+    W_PROGRESS: float = 1.0    # reward per world unit moved closer to the target (water for roots, light for shoots)
+    GOAL_BONUS: float = 10.0   # paid only for a real water / light find (see step())
     ENERGY_COST: float = 0.01
     COLLISION_PENALTY: float = 0.5
     STEP_LENGTH: float = 0.3   # world units per growth step
@@ -223,7 +224,10 @@ class BaseAgent:
         # --- Terminal checks ---
         if self._goal_reached(world):
             self.stop_reason = self._get_stop_reason()
-            reward += self.GOAL_BONUS
+            # Only a real find pays. Hitting the depth/height cap (stop reason BUDGET)
+            # must not, otherwise growing straight collects the bonus for free.
+            if self.stop_reason in (StopReason.WATER_FOUND, StopReason.LIGHT_FOUND):
+                reward += self.GOAL_BONUS
             self.done = True
         elif self._extra_terminal(world):
             self.stop_reason = StopReason.SUPPRESSED
@@ -249,7 +253,18 @@ class BaseAgent:
         step_len = math.hypot(dx, dy) + 1e-8
         gx, gy = dx / step_len, dy / step_len  # normalised growth direction
 
-        photo = hydro = 0.0
+        photo = hydro = progress = 0.0
+
+        # Progress toward the goal: potential-based shaping, Phi(s) = -distance to target.
+        # Uses the true target position (privileged, reward-only); tip_pos is still the
+        # position BEFORE this step. A collision means the tip did not move.
+        if self.W_PROGRESS > 0 and not collision:
+            target = world.water_target if self.IS_ROOT else world.light_target
+            if target is not None:
+                x, y = self.tip_pos
+                d_old = math.hypot(target[0] - x, target[1] - y)
+                d_new = math.hypot(target[0] - (x + dx), target[1] - (y + dy))
+                progress = self.W_PROGRESS * (d_old - d_new)
 
         # Phototropism (shoot only via W_PHOTO)
         if self.W_PHOTO > 0:
@@ -263,7 +278,9 @@ class BaseAgent:
                 gx * world.moisture_grad_x + gy * world.moisture_grad_y
             )
 
-        # Gravitropism (all agents) (Need fixes)
+        # Gravitropism (all agents). Dotted with the world gravity vector, so a positive
+        # weight rewards growing DOWN. Shoots/branches therefore set W_GRAVI = 0 instead
+        # of a positive weight, which would penalise growing up.
         gravi = self.W_GRAVI * (gx * world.gravity_x + gy * world.gravity_y)
 
         # Running costs
@@ -275,9 +292,10 @@ class BaseAgent:
             "photo": float(photo),
             "hydro": float(hydro),
             "gravi": float(gravi),
+            "progress": float(progress),
             "cost": float(cost),
         }
-        return float(photo + hydro + gravi + cost)
+        return float(photo + hydro + gravi + progress + cost)
 
     # ------------------------------------------------------------------
     # Terminal condition hooks (override in subclasses)

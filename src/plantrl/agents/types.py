@@ -52,6 +52,10 @@ class WorldSnapshot:
     gravity_y:        float
     auxin_local:      float
     cytokinin_local:  float
+    # Privileged info used ONLY for reward shaping (BaseAgent._compute_reward).
+    # It is deliberately NOT part of the 28-float observation.
+    water_target:     tuple[float, float] | None = None   # nearest live moisture pocket centre
+    light_target:     tuple[float, float] | None = None   # light source position
 
 
 @dataclass
