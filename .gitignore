@@ -19,3 +19,6 @@ venv/
 checkpoints/
 logs/
 runs/
+
+# Bundle Files
+Bundles/
