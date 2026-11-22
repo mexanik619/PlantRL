@@ -122,7 +122,7 @@ class CurriculumCallback(BaseCallback):
 
 def train(
     start_stage: int = 1,
-    total_steps: int = 10_000_000,
+    total_steps: int = 100_000,
     log_dir: str = "logs",
     checkpoint_dir: str = "checkpoints",
     seed: int = 42,
@@ -223,7 +223,7 @@ def train(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train PlantRL SAC agent")
     parser.add_argument("--stage", type=int, default=1, choices=[1, 2, 3])
-    parser.add_argument("--total-steps", type=int, default= 10_000_000)
+    parser.add_argument("--total-steps", type=int, default=100_000)
     parser.add_argument("--log-dir", type=str, default="logs")
     parser.add_argument("--checkpoint-dir", type=str, default="checkpoints")
     parser.add_argument("--seed", type=int, default=42)
