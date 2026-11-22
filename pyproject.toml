@@ -23,6 +23,7 @@ dev = ["pytest>=7.4.0"]
 [project.scripts]
 plantrl-train = "plantrl.train:main"
 plantrl-viz = "plantrl.visualize:main"
+plantrl-render = "plantrl.render_run:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

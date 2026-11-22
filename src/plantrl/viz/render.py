@@ -57,26 +57,11 @@ def _light_grid(X, Y, src_xy, k, peak):
 # Main entry
 # ----------------------------------------------------------------------
 
-def render_episode(
-    ep: dict[str, Any],
-    out: str | Path | None = None,
-    *,
-    fields: Sequence[str] = ("moisture", "light"),
-    fps: int = 12,
-    every: int = 1,
-    dpi: int = 80,
-    frame: int | None = None,
-    show: bool = False,
-):
-    """Render an episode.
+def build_episode_view(ep, fig, fields=("moisture", "light"), every=1):
+    """Lay the episode out on ``fig`` (cleared first). Returns ``(draw, frames, T)``.
 
-    Args:
-        ep:     Dict from ``load_episode`` / ``TrajectoryRecorder.episode``.
-        out:    ``.gif`` / ``.mp4`` (animation) or ``.png`` (single frame).
-                ``None`` + ``show=True`` opens an interactive window.
-        fields: Background layers: any of moisture, light, auxin, cyto.
-        every:  Draw every N-th step (the last step is always included).
-        frame:  For ``.png`` output: which step to draw (default: last).
+    ``draw(i)`` paints step ``i`` onto this same figure, so one figure can be reused
+    for many episodes (e.g. one video that contains a whole demo session).
     """
     unknown = set(fields) - set(ALL_FIELDS)
     if unknown:
@@ -103,8 +88,7 @@ def render_episode(
         first_step.setdefault(int(aid), i)
     spawn_idx = np.array([i for aid, i in first_step.items() if aid >= 2], dtype=int)  # skip the two primaries
 
-    # ---------------- figure ----------------
-    fig = plt.figure(figsize=(13, 7.4), dpi=dpi)
+    fig.clf()
     gs = fig.add_gridspec(3, 2, width_ratios=[1.5, 1], height_ratios=[0.7, 1.0, 1.8],
                           hspace=0.45, wspace=0.14, left=0.045, right=0.985, top=0.94, bottom=0.08)
     ax = fig.add_subplot(gs[:, 0])
@@ -246,7 +230,32 @@ def render_episode(
     frames = list(range(0, T, max(1, every)))
     if frames[-1] != T - 1:
         frames.append(T - 1)
+    return draw, frames, T
 
+
+def render_episode(
+    ep: dict[str, Any],
+    out: str | Path | None = None,
+    *,
+    fields: Sequence[str] = ("moisture", "light"),
+    fps: int = 12,
+    every: int = 1,
+    dpi: int = 80,
+    frame: int | None = None,
+    show: bool = False,
+):
+    """Render an episode.
+
+    Args:
+        ep:     Dict from ``load_episode`` / ``TrajectoryRecorder.episode``.
+        out:    ``.gif`` / ``.mp4`` (animation) or ``.png`` (single frame).
+                ``None`` + ``show=True`` opens an interactive window.
+        fields: Background layers: any of moisture, light, auxin, cyto.
+        every:  Draw every N-th step (the last step is always included).
+        frame:  For ``.png`` output: which step to draw (default: last).
+    """
+    fig = plt.figure(figsize=(13, 7.4), dpi=dpi)
+    draw, frames, T = build_episode_view(ep, fig, fields=fields, every=every)
     out = Path(out) if out else None
     suffix = out.suffix.lower() if out else ""
     if suffix == ".png" or (out is None and not show):
