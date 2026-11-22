@@ -23,6 +23,7 @@ from stable_baselines3.common.callbacks import (
 )
 
 from plantrl.environment.env import PlantEnv
+from plantrl.viz.run_recorder import RunLogCallback, RunRecorder
 
 
 # ──────────────────────────────────────────────
@@ -121,11 +122,14 @@ class CurriculumCallback(BaseCallback):
 
 def train(
     start_stage: int = 1,
-    total_steps: int = 1_000_000,
+    total_steps: int = 10_000_000,
     log_dir: str = "logs",
     checkpoint_dir: str = "checkpoints",
     seed: int = 42,
+    run_dir: str | None = "runs/train",
+    detail_every: int = 100,
 ) -> None:
+    """``run_dir``: record every training episode there (None disables recording)."""
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(checkpoint_dir, exist_ok=True)
 
@@ -135,10 +139,13 @@ def train(
     print(f"[PlantRL] Starting at stage {start_stage} with {n_envs} envs")
 
     # ── Build training envs ──
+    record = run_dir is not None
     train_env = make_vec_env(
         lambda: PlantEnv(stage=start_stage),
         n_envs=n_envs,
         seed=seed,
+        wrapper_class=RunRecorder if record else None,
+        wrapper_kwargs={"run_dir": run_dir, "detail_every": detail_every} if record else None,
     )
 
     # ── Eval env (single, deterministic) ──
@@ -178,6 +185,7 @@ def train(
         name_prefix="plant_sac",
         verbose=1,
     )
+    
     eval_cb = EvalCallback(
         eval_env,
         best_model_save_path=os.path.join(checkpoint_dir, "best"),
@@ -193,11 +201,13 @@ def train(
         stage_cfg=CURRICULUM,
         verbose=1,
     )
-
+    callbacks = [checkpoint_cb, eval_cb, curriculum_cb]
+    if record:
+        callbacks.append(RunLogCallback(run_dir))
     # ── Train ──
     model.learn(
         total_timesteps=total_steps,
-        callback=[checkpoint_cb, eval_cb, curriculum_cb],
+        callback=callbacks,
         tb_log_name="SAC_plant",
         reset_num_timesteps=True,
     )
@@ -213,10 +223,13 @@ def train(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train PlantRL SAC agent")
     parser.add_argument("--stage", type=int, default=1, choices=[1, 2, 3])
-    parser.add_argument("--total-steps", type=int, default=1_000_000)
+    parser.add_argument("--total-steps", type=int, default= 10_000_000)
     parser.add_argument("--log-dir", type=str, default="logs")
     parser.add_argument("--checkpoint-dir", type=str, default="checkpoints")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--run-dir", type=str, default="runs/train",help="where every training episode is recorded")
+    parser.add_argument("--no-record", action="store_true", help="disable episode recording")
+    parser.add_argument("--detail-every", type=int, default=100,help="every Nth episode per env also stores hormone grids")
     args = parser.parse_args()
 
     train(
@@ -225,6 +238,8 @@ def main() -> None:
         log_dir=args.log_dir,
         checkpoint_dir=args.checkpoint_dir,
         seed=args.seed,
+        run_dir=None if args.no_record else args.run_dir,
+        detail_every=args.detail_every,
     )
 
 
